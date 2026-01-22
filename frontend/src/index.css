@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Fonts */
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+
+  /* Color Palette - Modern Editorial */
+  --color-bg: #F9F8F6;
+  /* Soft cream/paper */
+  --color-surface: #FFFFFF;
+  --color-text-main: #121212;
+  --color-text-muted: #555555;
+  --color-accent: #2A2A2A;
+  /* Sharp black accent */
+  --color-blue: #3B5BDB;
+  /* International Klein Blue-ish */
+  --color-border: rgba(0, 0, 0, 0.06);
+
+  /* Spacing & Radius */
+  --radius-card: 16px;
+  --radius-button: 100px;
+  /* Pill shape */
+
+  /* Effects */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Tailwind mappings for compatibility */
+  --background: 33 6% 97%;
+  --foreground: 0 0% 7%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 7%;
+  --secondary: 40 6% 90%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 40 6% 90%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 40 6% 90%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 89%;
+  --input: 0 0% 89%;
+  --ring: 0 0% 9%;
+  --radius: 0.75rem;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    radial-gradient(#E5E5E5 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}

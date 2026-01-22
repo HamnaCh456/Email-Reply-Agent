@@ -1,6 +1,4 @@
-from crewai.tools import BaseTool  
-from pydantic import BaseModel, Field  
-from typing import Type  
+from typing import List, Dict
 import os  
 import base64  
 from google.auth.transport.requests import Request  
@@ -48,27 +46,56 @@ def get_gmail_service():
   
 def get_message_body(message_part):  
     """  
-    Decodes and returns the plain text body from a message part.  
+    Decodes and returns the plain text body from a message part, removing email headers.  
   
     Args:  
         message_part: The 'payload' dictionary of a message or a message part.  
   
     Returns:  
-        The decoded message body as a string, or None if not found.  
+        The decoded message body as a string with headers removed, or None if not found.  
     """  
+    body = None
+    
     # Check if the message has a body  
     if 'body' in message_part and 'data' in message_part['body']:  
-        # The body is base64-encoded, so we decode it  
-        return base64.urlsafe_b64decode(message_part['body']['data']).decode('utf-8')  
+        body = base64.urlsafe_b64decode(message_part['body']['data']).decode('utf-8')
       
     # If it's a multipart message, iterate through the parts  
-    if 'parts' in message_part:  
+    if body is None and 'parts' in message_part:  
         for part in message_part['parts']:  
             if part['mimeType'] == 'text/plain':  
                 # Found the plain text part, return its decoded body  
-                return base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')  
-      
-    return None  
+                body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+                break
+    
+    if body is None:
+        return None
+    
+    # Clean up email headers: Remove lines like "On [Date] at [Time] [Sender] <email> wrote:"
+    lines = body.split('\n')
+    cleaned_lines = []
+    skip_next_blank = False
+    
+    for line in lines:
+        trimmed = line.strip()
+        
+        # Check if this is an email header line
+        if trimmed.startswith('On ') and trimmed.endswith('wrote:'):
+            skip_next_blank = True
+            continue
+        
+        # Skip blank line immediately after header
+        if skip_next_blank and trimmed == '':
+            skip_next_blank = False
+            continue
+        
+        skip_next_blank = False
+        
+        # Remove quoted lines (lines starting with >)
+        if not trimmed.startswith('>'):
+            cleaned_lines.append(line)
+    
+    return '\n'.join(cleaned_lines).strip()  
   
 def read_unread_threads(service):  
     """  
@@ -121,10 +148,18 @@ def read_unread_threads(service):
             print("\nConversation History:\n" + "\n---\n".join(full_conversation_history))  
             print("-" * 40)  
               
+            # Extract sender
+            sender = 'Unknown'
+            for header in headers:
+                if header['name'] == 'From':
+                    sender = header['value']
+                    break
+              
             # Append the structured data to the list.  
             unread_threads_data.append({  
                 'thread_id': thread['id'],  
                 'subject': subject,  
+                'sender': sender,
                 'history': "\n---\n".join(full_conversation_history)  
             })  
   
@@ -133,42 +168,31 @@ def read_unread_threads(service):
       
     return unread_threads_data  
   
-# CrewAI Tool Implementation using BaseTool pattern  
-class GmailToolInput(BaseModel):  
-    """Input schema for the Gmail unread threads reader"""  
-    # No input parameters needed for this tool  
-    pass  
-  
-class GmailUnreadThreadsTool(BaseTool):  
-    name: str = "gmail_unread_threads_reader"  
-    description: str = "Reads unread Gmail threads and returns formatted conversation data with thread IDs, subjects, and full conversation history"  
-    args_schema: Type[BaseModel] = GmailToolInput  
-  
-    def _run(self) -> str:  
-        """  
-        Reads unread Gmail threads and returns formatted conversation data.  
+def fetch_unread_threads() -> str:  
+    """  
+    Reads unread Gmail threads and returns formatted conversation data.  
+      
+    Returns:  
+        A formatted string with unread thread information including thread IDs,   
+        subjects, and conversation history, or an error message if something goes wrong.  
+    """  
+    try:  
+        service = get_gmail_service()  
+        unread_threads_data = read_unread_threads(service)  
           
-        Returns:  
-            A formatted string with unread thread information including thread IDs,   
-            subjects, and conversation history, or an error message if something goes wrong.  
-        """  
-        try:  
-            service = get_gmail_service()  
-            unread_threads_data = read_unread_threads(service)  
-              
-            if not unread_threads_data:  
-                return "No unread threads found in your inbox."  
-              
-            # Format the data for the agent  
-            formatted_output = []  
-            for thread in unread_threads_data:  
-                thread_info = f"Thread ID: {thread['thread_id']}\n"  
-                thread_info += f"Subject: {thread['subject']}\n"  
-                thread_info += f"Conversation:\n{thread['history']}\n"  
-                thread_info += "-" * 40  
-                formatted_output.append(thread_info)  
-              
-            return "\n\n".join(formatted_output)  
-              
-        except Exception as e:  
-            return f"Error reading Gmail threads: {str(e)}"
+        if not unread_threads_data:  
+            return "No unread threads found in your inbox."  
+          
+        # Format the data for the agent  
+        formatted_output = []  
+        for thread in unread_threads_data:  
+            thread_info = f"Thread ID: {thread['thread_id']}\n"  
+            thread_info += f"Subject: {thread['subject']}\n"  
+            thread_info += f"Conversation:\n{thread['history']}\n"  
+            thread_info += "-" * 40  
+            formatted_output.append(thread_info)  
+          
+        return "\n\n".join(formatted_output)  
+          
+    except Exception as e:  
+        return f"Error reading Gmail threads: {str(e)}"

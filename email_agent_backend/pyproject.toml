@@ -1,0 +1,18 @@
+[project]
+name = "email-agent-backend"
+version = "0.1.0"
+description = "Gmail AI Agent with FastAPI and GenAI"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "google-api-python-client>=2.188.0",
+    "google-auth>=2.47.0",
+    "google-auth-httplib2>=0.3.0",
+    "google-auth-oauthlib>=1.2.4",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-dotenv>=1.0.0",
+    "genai==0.10.1",
+    "openai==0.27.8",
+    "google-genai>=1.59.0",
+]
